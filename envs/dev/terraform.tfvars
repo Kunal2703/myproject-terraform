@@ -8,17 +8,17 @@ azs                  = ["ap-south-1a", "ap-south-1b"]
 
 
 # Application EC2
-app_ami           = "ami-0f58b397bc5c1f2e8" # Amazon Linux 2 in Mumbai
+app_ami           = "ami-0f58b397bc5c1f2e8"
 app_instance_type = "t3.micro"
 
 # RDS
 rds_instance_class = "db.t3.micro"
-rds_username       = "postgresadmin"
-rds_password       = "SuperSecret123!"
+rds_username       = "<rds_username>"
+rds_password       = "<rds_password>"
 
 
 
 
 # Bastion
 bastion_key_name = "bastion-key"
-bastion_ssh_cidr = "203.0.113.25/32" # replace with your public IP
+bastion_ssh_cidr = "203.0.113.25/32"
