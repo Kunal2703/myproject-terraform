@@ -1,5 +1,5 @@
 module "vpc" {
-  source = "/Users/kunal/Desktop/devops-task-terraform/modules/vpc"
+  source = "modules/vpc"
 
   vpc_name             = var.vpc_name
   environment          = var.environment
