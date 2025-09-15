@@ -1,4 +1,4 @@
-# 🚀 AWS Infrastructure with Terraform (VPC, ALB, ASG, RDS, Bastion)
+# 🚀 AWS Infrastructure with Terraform (VPC, ALB, ASG, Bastion)
 
 This Terraform module provisions a **secure, production-ready AWS environment** in the **Mumbai (ap-south-1)** region.  
 It includes networking, compute, database, security, and a bastion host for controlled SSH access.
@@ -26,30 +26,4 @@ The infrastructure includes:
   - Auto Scaling Group (EC2 instances) in private subnets
   - Bastion host in public subnet for SSH access
 
-- **Database**
-  - RDS PostgreSQL (multi-AZ, private subnets, no public access)
 
----
-
-## 🏗️ High-Level Architecture Diagram
-
-```mermaid
-flowchart TD
-
-  subgraph VPC
-    subgraph Public Subnets
-      IGW[Internet Gateway]
-      ALB[Application Load Balancer]
-      Bastion[Bastion Host]
-    end
-
-    subgraph Private Subnets
-      EC2[EC2 Auto Scaling Group]
-      RDS[(RDS PostgreSQL)]
-    end
-
-    IGW <--> ALB
-    ALB <--> EC2
-    Bastion --> EC2
-    EC2 <--> RDS
-  end

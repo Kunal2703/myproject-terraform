@@ -215,37 +215,94 @@ resource "aws_autoscaling_group" "app_asg" {
   }
 }
 
-##############################
-# RDS PostgreSQL
-##############################
-resource "aws_db_subnet_group" "rds_subnets" {
-  name       = "${var.vpc_name}-rds-subnet-group"
-  subnet_ids = aws_subnet.private[*].id
 
-  tags = {
-    Name        = "${var.vpc_name}-rds-subnets"
-    Environment = var.environment
-  }
+#############################################
+# EKS Cluster IAM Roles
+#############################################
+resource "aws_iam_role" "eks_cluster_role" {
+  name = "${var.vpc_name}-eks-cluster-role"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Action = "sts:AssumeRole"
+      Effect = "Allow"
+      Principal = { Service = "eks.amazonaws.com" }
+    }]
+  })
 }
 
-resource "aws_db_instance" "postgres" {
-  identifier             = "${var.vpc_name}-rds"
-  engine                 = "postgres"
-  instance_class         = var.rds_instance_class
-  allocated_storage      = 20
-  username               = var.rds_username
-  password               = var.rds_password
-  db_subnet_group_name   = aws_db_subnet_group.rds_subnets.name
-  vpc_security_group_ids = [aws_security_group.rds_sg.id]
-  skip_final_snapshot    = true
-  multi_az               = true
-
-  tags = {
-    Name        = "${var.vpc_name}-rds"
-    Environment = var.environment
-  }
+resource "aws_iam_role_policy_attachment" "eks_cluster_AmazonEKSClusterPolicy" {
+  policy_arn = "arn:aws:iam::aws:policy/AmazonEKSClusterPolicy"
+  role       = aws_iam_role.eks_cluster_role.name
 }
 
+#############################################
+# EKS Cluster
+#############################################
+resource "aws_eks_cluster" "this" {
+  name     = var.eks_cluster_name
+  role_arn = aws_iam_role.eks_cluster_role.arn
+  version  = var.eks_version
 
+  vpc_config {
+    subnet_ids = concat(aws_subnet.public[*].id, aws_subnet.private[*].id)
+  }
 
+  depends_on = [aws_iam_role_policy_attachment.eks_cluster_AmazonEKSClusterPolicy]
+}
 
+#############################################
+# Node Group IAM Role
+#############################################
+resource "aws_iam_role" "eks_node_role" {
+  name = "${var.vpc_name}-eks-node-role"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Action = "sts:AssumeRole"
+      Effect = "Allow"
+      Principal = { Service = "ec2.amazonaws.com" }
+    }]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "eks_worker_node_AmazonEKSWorkerNodePolicy" {
+  policy_arn = "arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy"
+  role       = aws_iam_role.eks_node_role.name
+}
+
+resource "aws_iam_role_policy_attachment" "eks_worker_node_AmazonEKS_CNI_Policy" {
+  policy_arn = "arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy"
+  role       = aws_iam_role.eks_node_role.name
+}
+
+resource "aws_iam_role_policy_attachment" "eks_worker_node_AmazonEC2ContainerRegistryReadOnly" {
+  policy_arn = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly"
+  role       = aws_iam_role.eks_node_role.name
+}
+
+#############################################
+# Node Group
+#############################################
+resource "aws_eks_node_group" "this" {
+  cluster_name    = aws_eks_cluster.this.name
+  node_group_name = "${var.vpc_name}-eks-nodes"
+  node_role_arn   = aws_iam_role.eks_node_role.arn
+  subnet_ids      = aws_subnet.private[*].id
+
+  scaling_config {
+    desired_size = var.eks_node_desired_size
+    min_size     = var.eks_node_min_size
+    max_size     = var.eks_node_max_size
+  }
+
+  instance_types = [var.eks_node_instance_type]
+
+  depends_on = [
+    aws_iam_role_policy_attachment.eks_worker_node_AmazonEKSWorkerNodePolicy,
+    aws_iam_role_policy_attachment.eks_worker_node_AmazonEKS_CNI_Policy,
+    aws_iam_role_policy_attachment.eks_worker_node_AmazonEC2ContainerRegistryReadOnly
+  ]
+}

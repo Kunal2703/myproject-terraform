@@ -1,5 +1,5 @@
 module "vpc" {
-  source = "/Users/kunal/Desktop/myproject-terraform/modules/vpc"
+  source = "/Users/kunal/Desktop/devops-task-terraform/modules/vpc"
 
   vpc_name             = var.vpc_name
   environment          = var.environment
@@ -8,19 +8,19 @@ module "vpc" {
   private_subnet_cidrs = var.private_subnet_cidrs
   azs                  = var.azs
 
-  # Application
+  # Application EC2
   app_ami           = var.app_ami
   app_instance_type = var.app_instance_type
 
-  # RDS
-  rds_instance_class = var.rds_instance_class
-  rds_username       = var.rds_username
-  rds_password       = var.rds_password
-
-
-  # New vars for Bastion
+  # Bastion
   bastion_key_name = var.bastion_key_name
   bastion_ssh_cidr = var.bastion_ssh_cidr
+
+  # EKS
+  eks_cluster_name        = var.eks_cluster_name
+  eks_version             = var.eks_version
+  eks_node_instance_type  = var.eks_node_instance_type
+  eks_node_desired_size   = var.eks_node_desired_size
+  eks_node_min_size       = var.eks_node_min_size
+  eks_node_max_size       = var.eks_node_max_size
 }
-
-
