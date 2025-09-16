@@ -18,7 +18,6 @@ The infrastructure includes:
 - **Security**
   - **ALB SG** → allows HTTP/HTTPS from the internet
   - **App SG** → allows traffic only from ALB and Bastion
-  - **RDS SG** → allows traffic only from App EC2 instances
   - **Bastion SG** → allows SSH only from your admin IP
 
 - **Compute**
